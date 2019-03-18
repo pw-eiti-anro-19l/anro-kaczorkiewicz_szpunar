@@ -1,0 +1,4 @@
+<launch>
+	<node pkg="turtlesim" name="sim" type="turtlesim_node"/>
+	<node pkg="anro_kacz_szpun" name="turtle" type="turtle.py" output="screen"/>
+</launch>
