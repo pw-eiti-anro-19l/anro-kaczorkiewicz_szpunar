@@ -21,7 +21,7 @@ with open('urdf_vectors.yaml', 'w') as yamlFile:
 
         data[k] = [a, d, al, th]
 
-        yamlFile.write(k + '\n')
+        yamlFile.write(k + ':\n')
         yamlFile.write("  j_xyz: " + str(data[k][0]) + " 0 " + str(data[k][1]) + "\n")
         yamlFile.write("  j_rpy: " + str(data[k][2]) + " 0 " + str(data[k][3]) + "\n")
         yamlFile.write("  l_xyz: " + str(data[k][0]/2) + " 0 0\n")
