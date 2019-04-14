@@ -2,15 +2,6 @@ import json
 
 data = {}
 
-# data['i1_xyz'] = []
-i1_rpy = []
-
-i2_xyz = []
-i2_rpy = []
-
-i3_xyz = []
-i3_rpy = []
-
 with open('dh_parameters.json', 'r') as jsonFile:
     data = json.loads(jsonFile.read())
 
@@ -27,3 +18,4 @@ with open('urdf_vectors.yaml', 'w') as yamlFile:
         yamlFile.write("  l_xyz: " + str(data[k][0]/2) + " 0 0\n")
         yamlFile.write("  l_rpy: 0 0 0\n")
         yamlFile.write("  l_len: " + str(data[k][0]) + "\n")
+        yamlFile.write("  slide: " + str(-1*data[k][1]) + "\n")

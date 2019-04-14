@@ -1,18 +1,21 @@
 i1:
   j_xyz: 0.0 0 0.5
-  j_rpy: 0.0 0 0.0
-  l_xyz: 0.0 0 0
-  l_rpy: 0 0 0
-  l_len: 0.0
-i3:
-  j_xyz: 0.0 0 0.5
   j_rpy: 1.57079 0 1.57079
   l_xyz: 0.0 0 0
   l_rpy: 0 0 0
   l_len: 0.0
+  slide: -0.5
+i3:
+  j_xyz: 0.0 0 0.5
+  j_rpy: 0.0 0 0.0
+  l_xyz: 0.0 0 0
+  l_rpy: 0 0 0
+  l_len: 0.0
+  slide: -0.5
 i2:
   j_xyz: 0.0 0 1.0
   j_rpy: 1.57079 0 1.57079
   l_xyz: 0.0 0 0
   l_rpy: 0 0 0
   l_len: 0.0
+  slide: -1.0
