@@ -1,0 +1,20 @@
+<package>
+  <name>lab3</name>
+  <version>0.0.1</version>
+
+  <description>This package contains a number of URDF tutorials.</description>
+  <author email="szpunar98@gmail.com">W. Kaczorkiewicz M. Szpunar</author>
+
+  <maintainer email="szpunar98@gmail.com">W. Kaczorkiewicz M. Szpunar</maintainer>
+
+  <license>BSD</license>
+  <url>http://ros.org/wiki/urdf_tutorial</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roslaunch</build_depend>
+  <run_depend>joint_state_publisher</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
+  <run_depend>rviz</run_depend>
+  <run_depend>xacro</run_depend>
+
+</package>
