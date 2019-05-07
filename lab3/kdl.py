@@ -20,13 +20,13 @@ def callback(data):
 
         last_d = d
         last_th = th
-        a = params["a"] - 0.5
-        d = params["d"] 
+        a = params["a"]
+        d = params["d"]
         al = params["al"]
         th = params["th"]
 
         if counter!= 0:
-        	kdlChain.addSegment(kdl.Segment(kdl.Joint(kdl.Joint.TransZ), frame.DH(a, al, d, th)))
+        	kdlChain.addSegment(kdl.Segment(kdl.Joint(kdl.Joint.TransZ), frame.DH(a - 0.5, al, d - 0.5, th)))
 
         counter += 1
     		
