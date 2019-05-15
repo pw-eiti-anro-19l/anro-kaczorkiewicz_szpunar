@@ -1,26 +1,33 @@
 import json
 
-data = {}
-json_file = {}
+from tf.transformations import *
 
 with open('dh_parameters.json', 'r') as file:
-        json_file = json.loads(file.read())
+    dhJson= json.loads(file.read())
 
-with open('urdf_vectors.yaml', 'w') as yamlFile:
-    for k in json_file:
-        params = json.loads(json.dumps(k))
-        a = params["a"]
-        d = params["d"]
-        al = params["al"]
-        th = params["th"]
+xaxis, yaxis, zaxis = (1, 0, 0), (0, 1, 0), (0, 0, 1)
+with open('urdf_vectors.yaml', 'w') as file:
+    for instance in dhJson:
+        oneInstance= json.loads(json.dumps(instance))
+        a = oneInstance["a"]
+        d = oneInstance["d"]
+        alpha=oneInstance["al"]
+        theta = oneInstance["th"]
 
-        # data[k] = [a, d, al, th]
+        matrixD= translation_matrix((0, 0, d))
+        matrixTheta = rotation_matrix(theta, zaxis)
+        matrixA = translation_matrix((a, 0, 0))
+        matrixAlpha = rotation_matrix(alpha, xaxis)
 
-        yamlFile.write(str(k['name']) + ':\n')
-        yamlFile.write("  j_xyz: 0 0 0\n")
-        yamlFile.write("  j_rpy: " + str(al) + " 0 " + str(th) + "\n")
-        yamlFile.write("  l_xyz: " + str(a/2) + " 0 0\n")
-        yamlFile.write("  l_rpy: 0 0 0\n")
-        yamlFile.write("  l_len: " + str(d) + "\n")
-        yamlFile.write("  slide: " + str(d) + "\n")
-        yamlFile.write("  shape_origin: 0 " + str(-1*d/2) + " 0\n")
+        TransMatrix = concatenate_matrices(matrixA,matrixAlpha,matrixTheta, matrixD)
+        rpy = euler_from_matrix(TransMatrix)
+        xyz = translation_from_matrix(TransMatrix)
+
+
+        file.write(oneInstance["name"] + ":\n")
+        file.write("  j_xyz: "+str(xyz[0])+" "+str(xyz[1])+" "+str(xyz[2])+"\n")
+        file.write("  j_rpy: "+str(rpy[0])+' '+str(rpy[1])+' '+str(rpy[2])+'\n')
+        file.write("  l_xyz: "+str(0)+' '+str(0)+' '+str(float(d)*(-0.5))+'\n')
+        file.write("  l_rpy: "+str(0)+' '+str(0)+' '+str(0)+'\n')
+        file.write("  l_len: "+str(d)+'\n')
+            
