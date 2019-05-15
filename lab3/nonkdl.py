@@ -1,70 +1,74 @@
-import rospy
 import json
-from sensor_msgs.msg import *
-from geometry_msgs.msg import *
+import rospy
+import os
+from sensor_msgs.msg import JointState
 from tf.transformations import *
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import PoseStamped
 
+
+def is_positive(data):
+    i=0
+    for piece in restrictions_file:
+        one_piece= json.loads(json.dumps(piece))
+        if data.position[i]>one_piece["forward"] or data.position[i]<one_piece["backward"] :
+            return False
+        i=i+1
+    return True
 def callback(data):
-    main_matrix = translation_matrix((0, 0, 0))
+    if is_positive(data)==False:
+        rospy.logerr("Position is not available: " + str(data))
+        return
+    main_matrix = translation_matrix((0, 0, 0));
+    
+    i=0
+    for piece in dh_file:
+        one_piece= json.loads(json.dumps(piece))
+        a = one_piece["a"]
+        d = one_piece["d"]
+        al = one_piece["al"]
+        th = one_piece["th"]
 
-    counter = 0
-    for i in json_file:
-        print(data)
-        params = json.loads(json.dumps(i))
-        a = params["a"]
-        d = params["d"]
-        al = params["al"]
-        th = params["th"]
-
+        matrix_d= translation_matrix((0, 0, d*(1+data.position[i])))
+        matrix_th = rotation_matrix(th, zaxis)
         matrix_a = translation_matrix((a, 0, 0))
-        matrix_al = rotation_matrix(al, (1, 0, 0))
-        matrix_d= translation_matrix((0, 0, d*(1+data.position[counter])))
-        matrix_th = rotation_matrix(th, (0, 0, 1))
+        matrix_al = rotation_matrix(al, xaxis)
 
-        trans = concatenate_matrices(matrix_a, matrix_al, matrix_d, matrix_th)
-        t_list[counter] = trans
-
-        counter += 1
-
-    main_matrix = concatenate_matrices(t_list[0], t_list[1], t_list[2])
-
+        trans_matrix = concatenate_matrices(matrix_a,matrix_al,matrix_th, matrix_d)
+        main_matrix = concatenate_matrices(main_matrix, trans_matrix)
+        i += 1
+        
+    
     x, y, z = translation_from_matrix(main_matrix)
+    qx, qy, qz, qw = quaternion_from_matrix(main_matrix)
+    kdl_pose = PoseStamped()
+    kdl_pose.header.frame_id = 'base_link'
+    kdl_pose.header.stamp = rospy.Time.now()
     
-    robot_pose = PoseStamped()
-    robot_pose.header.frame_id = "base_link"
-    robot_pose.header.stamp = rospy.Time.now()
-    robot_pose.pose.position.x = x
-    robot_pose.pose.position.y = y
-    robot_pose.pose.position.z = z
+    kdl_pose.pose.position.x = x
+    kdl_pose.pose.position.y = y
+    kdl_pose.pose.position.z = z
+    kdl_pose.pose.orientation.x = qx
+    kdl_pose.pose.orientation.y = qy
+    kdl_pose.pose.orientation.z = qz
+    kdl_pose.pose.orientation.w = qw
+    pub.publish(kdl_pose)
     
-    xq, yq, zq, wq = quaternion_from_matrix(main_matrix)
 
-    robot_pose.pose.orientation.x = xq
-    robot_pose.pose.orientation.y = yq
-    robot_pose.pose.orientation.z = zq
-    robot_pose.pose.orientation.w = wq
-
-    publisher.publish(robot_pose)
-
-def nonkdl_listener():
-    rospy.init_node('NONKDL_DKIN', anonymous = False)
-    # publisher = rospy.Publisher('n_k_axes', PoseStamped, queue_size=10)
-
-    rospy.Subscriber("joint_states", JointState , callback)
-
-    rospy.spin()
 
 if __name__ == '__main__':
-    json_file = {}
-    t_list = {}
-    publisher = rospy.Publisher('n_k_axes', PoseStamped, queue_size=10)
+    xaxis, yaxis, zaxis = (1, 0, 0), (0, 1, 0), (0, 0, 1)
+    rospy.init_node('NONKDL_DKIN', anonymous=False)
+    dh_file ={}
+    restrictions_file ={}
+    with open(os.path.dirname(os.path.realpath(__file__)) + '/restrictions.json', 'r') as file:
+        restrictions_file= json.loads(file.read())
+   
+    with open(os.path.dirname(os.path.realpath(__file__)) + '/dh_parameters.json', 'r') as file:
+        dh_file= json.loads(file.read())
 
-    with open('dh_parameters.json', 'r') as file:
-        json_file = json.loads(file.read())
+    pub = rospy.Publisher('NoKdlAxes', PoseStamped, queue_size=10)
+    rospy.Subscriber("joint_states", JointState , callback)
     
-    # laczenie z modelem
-    try:
-	    nonkdl_listener()        
-    except rospy.ROSInterruptException:
-        pass
+   
+    rospy.spin()

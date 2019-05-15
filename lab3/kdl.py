@@ -1,87 +1,84 @@
-import rospy
 import json
-import PyKDL as kdl
-from sensor_msgs.msg import *
-from geometry_msgs.msg import *
+import rospy
+import PyKDL
+import os
+from sensor_msgs.msg import JointState
 from tf.transformations import *
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import PoseStamped
 
-
+def is_positive(data):
+    i=0
+    for piece in restrictions_file:
+        one_piece= json.loads(json.dumps(piece))
+        if data.position[i]>one_piece["forward"] or data.position[i]<one_piece["backward"] :
+            return False
+        i=i+1
+    return True
 def callback(data):
-    kdlChain =kdl.Chain()   
-    frame = kdl.Frame();
-    main_matrix = translation_matrix((0, 0, 0))
+    if is_positive(data)==False:
+        rospy.logerr("Position is not available: " + str(data))
+        return
+    kdl_chain =PyKDL.Chain()   
+    Frame = PyKDL.Frame();
+
     d=0
     th=0
-    counter = 0
-    for i in json_file:
-        #print(data)
-        params = json.loads(json.dumps(i))
-
+    i=1
+    for piece in dh_file:
+        one_piece= json.loads(json.dumps(piece))
         last_d = d
         last_th = th
-        a = params["a"]
-        d = params["d"]
-        al = params["al"]
-        th = params["th"]
+        a = one_piece["a"]
+        d = one_piece["d"]
+        al=one_piece["al"]
+        th = one_piece["th"]
+        if i!= 1:
+            kdl_chain.addSegment(PyKDL.Segment(PyKDL.Joint(PyKDL.Joint.TransZ), Frame.DH(a, al, last_d, last_th)))
+        i += 1
+    kdl_chain.addSegment(PyKDL.Segment(PyKDL.Joint(PyKDL.Joint.TransZ), Frame.DH(0, 0, d, th)))
+      
+      
+    jointDisplacement = PyKDL.JntArray(kdl_chain.getNrOfJoints())
 
-        if counter!= 0:
-        	kdlChain.addSegment(kdl.Segment(kdl.Joint(kdl.Joint.TransZ), frame.DH(a - 0.5, al, d - 0.5, th)))
+    jointDisplacement[0] = data.position[0]
+    jointDisplacement[1] = data.position[1]
+    jointDisplacement[2] = data.position[2]
 
-        counter += 1
-    		
-    kdlChain.addSegment(kdl.Segment(kdl.Joint(kdl.Joint.TransZ), frame.DH(0, 0, d, th)))
-    	
+    f_k_solver = PyKDL.ChainFkSolverPos_recursive(kdl_chain)
 
-    jointPos = kdl.JntArray(kdlChain.getNrOfJoints())
-    jointPos[0] = data.position[0] 
-    jointPos[1] = data.position[1]
-    jointPos[2] = data.position[2]
+    frame = PyKDL.Frame()
+    f_k_solver.JntToCart(jointDisplacement, frame)
+    quatr = frame.M.GetQuaternion()
     
-    forvKin = kdl.ChainFkSolverPos_recursive(kdlChain)
-    eeFrame = kdl.Frame() # <--polaczyc eeFrame z reszta robota
-    forvKin.JntToCart(jointPos, eeFrame)
-    print(eeFrame)
+    kdl_pose = PoseStamped()
+    kdl_pose.header.frame_id = 'base_link'
+    kdl_pose.header.stamp = rospy.Time.now()
 
-
-
-    quaternion = eeFrame.M.GetQuaternion()
-
+    kdl_pose.pose.position.x = frame.p[0]
+    kdl_pose.pose.position.y = frame.p[1]
+    kdl_pose.pose.position.z = frame.p[2]
+    kdl_pose.pose.orientation.x = quatr[0]
+    kdl_pose.pose.orientation.y = quatr[1]
+    kdl_pose.pose.orientation.z = quatr[2]
+    kdl_pose.pose.orientation.w = quatr[3]
+    pub.publish(kdl_pose)
     
-    robot_pose = PoseStamped()
-    robot_pose.header.frame_id = 'base_link'
-    robot_pose.header.stamp = rospy.Time.now()
 
-
-    robot_pose.pose.position.x = eeFrame.p[0]
-    robot_pose.pose.position.y = eeFrame.p[1]
-    robot_pose.pose.position.z = eeFrame.p[2]
-
-    robot_pose.pose.orientation.x = quaternion[0]
-    robot_pose.pose.orientation.y = quaternion[1]
-    robot_pose.pose.orientation.z = quaternion[2]
-    robot_pose.pose.orientation.w = quaternion[3]
-    publisher.publish(robot_pose)
-
-def kdl_listener():
-    rospy.init_node('KDL_DKIN', anonymous = False)
-    # publisher = rospy.Publisher('n_k_axes', PoseStamped, queue_size=10)
-
-    rospy.Subscriber("joint_states", JointState , callback)
-
-    rospy.spin()
 
 if __name__ == '__main__':
-    json_file = {}
-    t_list = {}
-
-    publisher = rospy.Publisher('n_k_axes', PoseStamped, queue_size=10)
-
-    with open('dh_parameters.json', 'r') as file:
-        json_file = json.loads(file.read())
     
-    # laczenie z modelem
-    try:
-	    kdl_listener()        
-    except rospy.ROSInterruptException:
-        pass
+    rospy.init_node('KDL_DKIN', anonymous=False)
+    dh_file ={}
+    restrictions_file ={}
+    with open(os.path.dirname(os.path.realpath(__file__)) + '/restrictions.json', 'r') as file:
+        restrictions_file= json.loads(file.read())
+   
+    with open(os.path.dirname(os.path.realpath(__file__)) + '/dh_parameters.json', 'r') as file:
+        dh_file= json.loads(file.read())
+
+    pub = rospy.Publisher('k_axes', PoseStamped, queue_size=10)
+    rospy.Subscriber("joint_states", JointState , callback)
+    
+   
+    rospy.spin()
