@@ -7,18 +7,9 @@ from tf.transformations import *
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import PoseStamped
 
-def is_positive(data):
-    i=0
-    for piece in restrictions_file:
-        one_piece= json.loads(json.dumps(piece))
-        if data.position[i]>one_piece["forward"] or data.position[i]<one_piece["backward"] :
-            return False
-        i=i+1
-    return True
+
 def callback(data):
-    if is_positive(data)==False:
-        rospy.logerr("Position is not available: " + str(data))
-        return
+
     kdl_chain =PyKDL.Chain()   
     Frame = PyKDL.Frame();
 
@@ -70,10 +61,7 @@ if __name__ == '__main__':
     
     rospy.init_node('KDL_DKIN', anonymous=False)
     dh_file ={}
-    restrictions_file ={}
-    with open(os.path.dirname(os.path.realpath(__file__)) + '/restrictions.json', 'r') as file:
-        restrictions_file= json.loads(file.read())
-   
+       
     with open(os.path.dirname(os.path.realpath(__file__)) + '/dh_parameters.json', 'r') as file:
         dh_file= json.loads(file.read())
 
