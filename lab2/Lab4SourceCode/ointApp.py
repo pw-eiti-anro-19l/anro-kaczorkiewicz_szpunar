@@ -14,15 +14,16 @@ from geometry_msgs.msg import PoseStamped
  
 
 freq = 50
- 
+start = [ 0, 0, 0] 
 
 def interpolate(jMsg):
-	if jMsg.time <= 0 or not -100 <= jMsg.j1 <= 100 or not -100 <= jMsg.j2 <= 100 or not -100 <= jMsg.j3 <= 100:
-		return False
+	global start
+	if (jMsg.j1>1 or jMsg.j2>1 or jMsg.j3>1):
+		return ("bawi cie to?")
  
 	end = [jMsg.j1, jMsg.j2, jMsg.j3]
- 	start = [ 0, 0, 0] 
- 	change = [0,0,0]
+ 	
+ 	change = start
 	step=[(end[0]-start[0])/(freq*jMsg.time),(end[1]-start[1])/(freq*jMsg.time),(end[2]-start[2])/(freq*jMsg.time)]
 	for k in range(0, int(freq*jMsg.time)+1):
 		for i in range(0, 3):
@@ -41,12 +42,13 @@ def interpolate(jMsg):
         	rate.sleep()
  
 	current_time = 0
+	start = end
 	return (str(jMsg.j1)+" "+str(jMsg.j2)+" "+str(jMsg.j3))
 
  
  
 if __name__ == "__main__":
-    rospy.init_node('int_srv')
-    pub = rospy.Publisher('oint',PoseStamped, queue_size=10)
-    s = rospy.Service('ointApp', Jint, interpolate)
-rospy.spin()
+	rospy.init_node('int_srv')
+	pub = rospy.Publisher('oint',PoseStamped, queue_size=10)
+	s = rospy.Service('ointApp', Jint, interpolate)
+	rospy.spin()
