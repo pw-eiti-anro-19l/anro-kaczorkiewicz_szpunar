@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<robot name="firstRobot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:property name="params" value="${load_yaml('../urdf_vectors.yaml')}"/>
+    <xacro:property name="l_width" value="0.01"/>
+
+    <link name="base_link">
+        <visual>
+            <geometry>
+                <cylinder length="0.04" radius="0.05"/>
+            </geometry>
+            <origin xyz="0 0 -0.02"/>
+        </visual>
+    </link>
+
+    <link name="l1">
+        <visual>
+            <geometry>
+                <box size=" ${l_width} ${params['i1']['l_len']} ${l_width} "/>
+               <cylinder length="0.04" radius="0.05"/>
+            </geometry>
+            <origin xyz="${params['i1']['shape_origin']}" rpy="${params['i1']['l_rpy']}"/>
+        </visual>
+    </link>
+
+    <link name="l2">
+        <visual>
+            <geometry>
+                <box size=" ${l_width} ${params['i2']['l_len']} ${l_width}"/>
+            </geometry>
+            <origin xyz="${params['i2']['shape_origin']}" rpy="${params['i3']['l_rpy']}"/>
+        </visual>
+    </link>
+
+    <link name="l3">
+        <visual>
+            <geometry>
+                <box size=" ${l_width} ${params['i3']['l_len']} ${l_width} "/>
+            </geometry>
+            <origin xyz="${params['i3']['shape_origin']}" rpy="0 0 0"/>
+        </visual>
+    </link>
+
+    <joint name="base_l1" type="prismatic">
+        <parent link="base_link"/>
+        <child link="l1"/>
+        <origin xyz="0 0 0" rpy="${params['i2']['j_rpy']}"/>
+        <limit effort="1000.0" lower="${params['i1']['slide']}" upper="0" velocity="0.5"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+    <joint name="l1_l2" type="prismatic">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <origin xyz="${params['i2']['j_xyz']}" rpy="${params['i3']['j_rpy']}"/>
+        <limit effort="1000.0" lower="${params['i2']['slide']}" upper="0" velocity="0.5"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+    <joint name="l2_l3" type="prismatic">
+        <parent link="l2"/>
+        <child link="l3"/>
+        <origin xyz="${params['i3']['j_xyz']}" rpy="${params['i3']['j_rpy']}"/>
+         <limit effort="1000.0" lower="${params['i3']['slide']}" upper="0" velocity="0.5"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+</robot>
+

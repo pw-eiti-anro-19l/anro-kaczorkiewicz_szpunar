@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<robot name="firstRobot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:property name="params" value="${load_yaml('../urdf_vectors.yaml')}"/>
+    <xacro:property name="l_width" value="0.02"/>
+ 
+
+    <link name="base_link">
+        <visual>
+            <geometry>
+                <cylinder length="0.04" radius="0.05"/>
+            </geometry>
+            <origin xyz="0 0 -0.02"/>
+        </visual>
+    </link>
+    
+
+    <link name="l1">
+        <visual>
+            <geometry>
+                <box size=" ${l_width} ${params['i1']['l_len']} ${l_width} "/>
+          
+            </geometry>
+            <origin xyz="${params['i1']['shape_origin']}" rpy="${params['i1']['l_rpy']}"/>
+        </visual>
+    </link>
+
+    <link name="l2">
+        <visual>
+            <geometry>
+                <box size=" ${l_width} ${params['i2']['l_len']} ${l_width}"/>
+            </geometry>
+            <origin xyz="${params['i2']['shape_origin']}" rpy="${params['i3']['l_rpy']}"/>
+        </visual>
+    </link>
+
+    <link name="l3">
+        <visual>
+            <geometry>
+                <box size=" ${l_width}  ${l_width} ${params['i3']['l_len']}"/>
+            </geometry>
+            <origin xyz="0 0 -0.25" rpy="0 0 0"/>
+        </visual>
+    </link>
+
+    <joint name="base_l1" type="fixed">
+        <parent link="base_link"/>
+        <child link="l1"/>
+        <origin xyz="${params['i1']['j_xyz']}" rpy="${params['i2']['j_rpy']}"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <joint name="l1_l2" type="fixed">
+        <parent link="l1"/>
+        <child link="l2"/>
+        <origin xyz="${params['i2']['j_xyz']}" rpy="${params['i3']['j_rpy']}"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <joint name="l2_l3" type="fixed">
+        <parent link="l2"/>
+        <child link="l3"/>
+        <origin xyz="${params['i3']['j_xyz']}" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+</robot>
+
